@@ -1,5 +1,4 @@
 using DateTimeForm.Entities;
-using DateTimeForm.Entities.Selected;
 
 namespace DateTimeForm
 {
@@ -7,7 +6,8 @@ namespace DateTimeForm
     {
         List<string> strings = new List<string> { "Günlük", "Haftalýk" };
         List<WeekOrDay> weekOrDayList = new List<WeekOrDay>();
-        SelectionRange sr = new SelectionRange();
+        SelectionRange sr1 = new SelectionRange();
+        SelectionRange sr2 = new SelectionRange();
         List<DayOfWeek> selectedDays = new List<DayOfWeek>();
         public Form1()
         {
@@ -48,49 +48,50 @@ namespace DateTimeForm
         }
         private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
-            sr.Start = monthCalendar1.SelectionRange.Start;
-         
-            ComboBox comboBox = (ComboBox)sender;
-            string selected1 = (string)comboBox1.SelectedItem;
-            string selected2 = (string)comboBox2.SelectedItem;
-            var charint = selected2.Split('.');
-            var days = weekOrDayList.FirstOrDefault(x => x.Value == selected2);
-            int selectedDateRange = Convert.ToInt16(charint[0]);
-            if (selected1 == strings[0])
+            sr1.Start = monthCalendar1.SelectionRange.Start;
+            var compare = sr2.End - sr1.Start;
+            if (compare.TotalMinutes > 0)
             {
-                listBox1.Items.Clear();
-                sr.End = sr.Start.Date.AddDays(selectedDateRange - 1);
-                var listValues = sr.End - sr.Start;
-                List<string> tarihListesi = new List<string>();
-                for (DateTime tarih = sr.Start; tarih <= sr.End; tarih = tarih.AddDays(1))
+                ComboBox comboBox = (ComboBox)sender;
+                string selected1 = (string)comboBox1.SelectedItem;
+                string selected2 = (string)comboBox2.SelectedItem;
+                var charint = selected2.Split('.');
+                var days = weekOrDayList.FirstOrDefault(x => x.Value == selected2);
+                int selectedDateRange = Convert.ToInt16(charint[0]);
+                if (selected1 == strings[0])
                 {
-                    listBox1.Items.Add(tarih.ToShortDateString());
-                    tarihListesi.Add(tarih.ToShortDateString());
-                }
-                sr.Start = DateTime.Parse(tarihListesi[0]);
-                sr.End = DateTime.Parse(tarihListesi.Skip(tarihListesi.Count() - 1).First());
-                monthCalendar2.SelectionRange = sr;
-            }
-            else if (selected1 == strings[1] && selectedDays.Count<1)
-            {
-                listBox1.Items.Clear();
-                sr.End = sr.Start.Date.AddDays((selectedDateRange * 7) - 1);
-                var listValues = sr.End - sr.Start;
-                List<string> tarihListesi = new List<string>();
-                for (DateTime tarih = sr.Start; tarih <= sr.End; tarih = tarih.AddDays(1))
-                {
-                    listBox1.Items.Add(tarih.ToShortDateString());
-                    tarihListesi.Add(tarih.ToShortDateString());
-                }
-                sr.Start = DateTime.Parse(tarihListesi[0]);
-                sr.End = DateTime.Parse(tarihListesi.Skip(tarihListesi.Count() - 1).First());
-                monthCalendar2.SelectionRange = sr;
-            }
+                    listBox1.Items.Clear();
+                    //sr2.End = sr1.Start.Date.AddDays(selectedDateRange);
+                    var listValues = sr2.End - sr1.Start;
+                    for (DateTime tarih = sr1.Start; tarih <= sr2.End; tarih = tarih.AddDays(selectedDateRange))
+                    {
+                        listBox1.Items.Add(tarih.ToShortDateString());
+                    }
 
+                }
+                else if (selected1 == strings[1] && selectedDays.Count < 1)
+                {
+                    listBox1.Items.Clear();
+                    //sr2.End = sr1.Start.Date.AddDays((selectedDateRange * 7) - 1);
+                    var listValues = sr2.End - sr1.Start;
+                    for (DateTime tarih = sr1.Start; tarih <= sr2.End; tarih = tarih.AddDays(selectedDateRange + 7))
+                    {
+                        listBox1.Items.Add(tarih.ToShortDateString());
+                    }
+
+                }
+            }
+            else
+            {
+                listBox1.Items.Add("Lütfen Bitiþ Tarihi Seçiniz");
+            }
         }
         private void Form1_Load(object sender, EventArgs e)
         {
-            sr.Start = DateTime.Now;
+            sr1.Start = DateTime.Now;
+            sr2.Start = DateTime.Now;
+            sr1.End = DateTime.Now;
+            sr2.End = DateTime.Now;
             pazartesi.Visible = false;
             sali.Visible = false;
             carsamba.Visible = false;
@@ -121,25 +122,27 @@ namespace DateTimeForm
 
         private void monthCalendar1_DateChanged(object sender, DateRangeEventArgs e)
         {
-            SelectionRange sr = new SelectionRange();
-            sr.Start = monthCalendar2.SelectionRange.Start.Date;
+            sr1.Start = monthCalendar1.SelectionRange.Start.Date;
+            sr1.End = monthCalendar1.SelectionRange.End.Date;
+            monthCalendar1.SelectionRange = sr1;
         }
 
         private void monthCalendar2_DateChanged(object sender, DateRangeEventArgs e)
         {
-            SelectionRange sr = new SelectionRange();
-            sr.End = monthCalendar2.SelectionRange.End.Date;
+            sr2.Start = monthCalendar2.SelectionRange.Start.Date;
+            sr2.End = monthCalendar2.SelectionRange.End.Date;
+            monthCalendar2.SelectionRange = sr2;
         }
 
         private void pazartesi_Click(object sender, EventArgs e)
         {
-            DateSelector(pazartesi,DayOfWeek.Monday);
+            DateSelector(pazartesi, DayOfWeek.Monday);
         }
 
         private void sali_Click(object sender, EventArgs e)
         {
             DateSelector(sali, DayOfWeek.Tuesday);
-           
+
         }
 
         private void carsamba_Click(object sender, EventArgs e)
@@ -166,9 +169,8 @@ namespace DateTimeForm
         {
             DateSelector(cumartesi, DayOfWeek.Sunday);
         }
-        public void DateSelector(Button button,DayOfWeek dayOfWeek)
+        public void DateSelector(Button button, DayOfWeek dayOfWeek)
         {
-            sr.Start = monthCalendar1.SelectionRange.Start.Date;
             listBox1.Items.Clear();
             string selected1 = (string)comboBox1.SelectedItem;
             string selected2 = (string)comboBox2.SelectedItem;
@@ -187,19 +189,20 @@ namespace DateTimeForm
                 var charint = selected2.Split('.');
                 var days = weekOrDayList.FirstOrDefault(x => x.Value == selected2);
                 int selectedDateRange = Convert.ToInt16(charint[0]);
-                sr.End = sr.Start.Date.AddDays((selectedDateRange * 7) - 1);
-                var listValues = sr.End - sr.Start;
-                List<string> tarihListesi = new List<string>();
-                List<DateTime> tarihListesidate = new List<DateTime>();
-                for (DateTime tarih = sr.Start; tarih <= sr.End; tarih = tarih.AddDays(1))
+                var listValues = sr2.End - sr1.Start;
+                int counter = 0;
+                for (DateTime tarih = sr1.Start; tarih <= sr2.End; tarih = tarih.AddDays(1))
                 {
-                    tarihListesidate.Add(tarih);
                     if (selectedDays.Contains(tarih.DayOfWeek))
                     {
+                        counter++;
                         listBox1.Items.Add(tarih.ToShortDateString() + " => " + tarih.DayOfWeek);
-                    }
+                        if (counter == selectedDays.Count())
+                        {
+                            tarih = tarih.AddDays((selectedDateRange * 7) - selectedDays.Count());
+                        }
 
-                    tarihListesi.Add(tarih.ToShortDateString());
+                    }
                 }
             }
         }
